@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">ShortPlay</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="action_hidden">Show hidden</string>
+    <string name="action_loop">Loop</string>
+    <string name="action_rotate">Rotate</string>
+
+    <string name="primary_color">Primary Color</string>
+    <string name="accent_color">Accent Color</string>
+
+    <string name="pref_theme">pref_theme</string>
+    <string name="pref_theme_title">Theme</string>
+
+    <string name="pref_theme_value_light">light</string>
+    <string name="pref_theme_value_dark">dark</string>
+
+    <string name="hide_folders">Hidden folders</string>
+    <string name="security">Security</string>
+    <string name="other">Other</string>
+    <string name="secure">Secure app functions</string>
+    <string name="appaccess">App access</string>
+    <string name="pin">PIN</string>
+    <string name="password">Password</string>
+    <string name="fingerprint">Fingerprint</string>
+
+    <string name="action_sort">Sort mode</string>
+    <string name="sortNewFirst">Sort new first</string>
+    <string name="sortOldFirst">Sort old first</string>
+    <string name="sortZtoA">Sort Z to A</string>
+    <string name="sortAtoZ">Sort A to Z</string>
+    <string name="sortRandom">Random</string>
+
+    <string name="preference_internal_uri_extsdcard_photos">uri_extsdcard_photos</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_security_options">
+        <item>@string/pin</item>
+        <item>@string/password</item>
+        <item>@string/fingerprint</item>
+    </string-array>
+
+    <string-array name="pref_security_options_nofinger">
+        <item>@string/pin</item>
+        <item>@string/password</item>
+    </string-array>
+
+    <string-array name="pref_theme_options">
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+
+    <string-array name="pref_theme_values">
+        <item>@string/pref_theme_value_light</item>
+        <item>@string/pref_theme_value_dark</item>
+    </string-array>
+</resources>

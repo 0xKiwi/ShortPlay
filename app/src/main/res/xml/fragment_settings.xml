@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:colorpicker="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="Theme">
+
+        <org.polaric.colorful.ColorPickerPreference
+            android:key="primary"
+            android:title="@string/primary_color"
+            colorpicker:primary_color="true" />
+
+        <org.polaric.colorful.ColorPickerPreference
+            android:key="accent"
+            android:title="@string/accent_color"
+            colorpicker:accent_color="true" />
+
+        <ListPreference
+            android:defaultValue="@string/pref_theme_value_light"
+            android:entries="@array/pref_theme_options"
+            android:entryValues="@array/pref_theme_values"
+            android:key="@string/pref_theme"
+            android:summary="%s"
+            android:title="@string/pref_theme_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Options">
+
+        <CheckBoxPreference
+            android:key="videoOnLeft"
+            android:title="Show video list on left" />
+
+        <CheckBoxPreference
+            android:key="swipeGesture"
+            android:defaultValue="true"
+            android:title="Enable swipe left/right to skip" />
+
+        <Preference
+            android:key="security"
+            android:title="Security settings" />
+
+        <Preference
+            android:key="removeads"
+            android:title="Remove ads" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Other">
+
+        <Preference
+            android:key="share"
+            android:title="Share" />
+
+        <Preference
+            android:key="contact"
+            android:title="Contact Us" />
+
+    </PreferenceCategory>
+</PreferenceScreen>

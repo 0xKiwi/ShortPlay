@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/sortType"
+        android:icon="@drawable/sort_variant"
+        android:title="@string/action_sort"
+        android:orderInCategory="2"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sortAtoZ"
+                    android:title="@string/sortAtoZ" />
+                <item
+                    android:id="@+id/sortZtoA"
+                    android:title="@string/sortZtoA" />
+                <item
+                    android:id="@+id/sortNewFirst"
+                    android:title="@string/sortNewFirst" />
+                <item
+                    android:id="@+id/sortOldFirst"
+                    android:title="@string/sortOldFirst" />
+                <item
+                    android:id="@+id/sortRandom"
+                    android:title="@string/sortRandom" />
+            </group>
+        </menu>
+    </item>
+</menu>

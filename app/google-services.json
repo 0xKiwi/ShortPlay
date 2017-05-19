@@ -1,0 +1,58 @@
+{
+  "project_info": {
+    "project_number": "1032179238426",
+    "firebase_url": "https://shortplay-5e09e.firebaseio.com",
+    "project_id": "shortplay-5e09e",
+    "storage_bucket": "shortplay-5e09e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032179238426:android:0673f393291c11c5",
+        "android_client_info": {
+          "package_name": "com.amfasllc.shortplay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1032179238426-h1ctfuidjnmntq2nhn1d8d0t98ll6nek.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.amfasllc.shortplay",
+            "certificate_hash": "6c12968c3d39fd48bc4c1b790d93eed5cf9d61d0"
+          }
+        },
+        {
+          "client_id": "1032179238426-l3rg4fg5mr7tkg0qt8daop37ifq2vkv3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtOqWUKgsfUtqe3TkHgcaRkqDvtbLG1A4"
+        },
+        {
+          "current_key": "AIzaSyA54NQRqOOmJQxuxUVCCFBFgm8QgYdBRVo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032179238426-l3rg4fg5mr7tkg0qt8daop37ifq2vkv3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

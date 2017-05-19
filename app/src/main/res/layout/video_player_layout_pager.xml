@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="false">
+
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" />
+
+    <View
+        android:id="@+id/mainListener"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignRight="@id/videoView"
+        android:layout_alignTop="@id/videoView"
+        android:layout_alignBottom="@id/videoView"
+        android:layout_alignLeft="@id/videoView"
+        />
+
+    <View
+        android:id="@+id/leftListener"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/videoView"
+        android:layout_alignParentLeft="true" />
+
+    <View
+        android:id="@+id/rightListener"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/videoView"
+        android:layout_alignParentRight="true" />
+
+    <View
+        android:id="@+id/topListener"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/videoView"
+        android:layout_alignParentTop="true" />
+
+    <View
+        android:id="@+id/botListener"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@id/videoView" />
+
+</RelativeLayout>

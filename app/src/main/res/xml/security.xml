@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="secure"
+        android:title="@string/secure"/>
+
+    <CheckBoxPreference
+        android:key="appaccess"
+        android:dependency="secure"
+        android:title="@string/appaccess"/>
+
+    <CheckBoxPreference
+        android:key="hidden"
+        android:defaultValue="true"
+        android:dependency="secure"
+        android:title="@string/hide_folders"/>
+
+</PreferenceScreen>
