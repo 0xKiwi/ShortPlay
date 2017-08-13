@@ -42,11 +42,13 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     private boolean hidden;
 
     private ArrayList<String> set;
+    private ArrayList<String> hiddenList;
 
     private Context mContext;
 
     private ArrayList<Folder> mFoldersList = new ArrayList<>();
     private ArrayList<File> mPath = new ArrayList<>();
+    ArrayList<String> saved;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView folderTitle;
@@ -70,18 +72,20 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         tinydb = new TinyDB(context);
 
         set = tinydb.getListString("faves");
+        hiddenList = tinydb.getListString("hiddenList");
+        saved = tinydb.getListString("saved");
         mPath = StorageProvider.getStorageRoots(mContext);
+
         scan(refresh);
     }
 
     private void scan(boolean refresh) {
         mFoldersList = StorageProvider.getAlbums(mContext, false);
         if (hidden) {
-            ArrayList<String> saved = tinydb.getListString("saved");
             //Toast.makeText(mContext, saved.get(0), Toast.LENGTH_SHORT).show();
             ArrayList<Folder> folders;
             if (saved.isEmpty() || refresh) {
-                Log.d("MEME", saved.get(1));
+                //Log.d("MEME", saved.get(0));
                 saved = new ArrayList<>();
                 folders = StorageProvider.getAlbums(mContext, true);
                 for (Folder item : folders)
@@ -93,6 +97,15 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                 for (String path : saved)
                     mFoldersList.add(new Folder(path, new File(path).getName(), true));
             }
+        } else {
+            if (hiddenList != null)
+                for (int i = 0; i < hiddenList.size(); i++) {
+                    File file = new File(hiddenList.get(i));
+                    Folder folder = new Folder(file.getAbsolutePath(), file.getName(), false);
+                    if (mFoldersList.contains(folder)) {
+                        mFoldersList.remove(folder);
+                    }
+                }
         }
 
         Collections.sort(mFoldersList, new Comparator<Folder>() {
@@ -123,32 +136,42 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, final int position) {
         final Folder folder = mFoldersList.get(position);
+        final File folderFile = new File(folder.getPath());
 
         viewHolder.folderTitle.setText(folder.getName());
 
         viewHolder.v.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent activity = new Intent(mContext, GalleryActivity.class);
-                activity.putExtra("folder", folder.getPath());
-                mContext.startActivity(activity);
+                if (folderFile.exists()) {
+                    Intent activity = new Intent(mContext, GalleryActivity.class);
+                    activity.putExtra("folder", folder.getPath());
+                    mContext.startActivity(activity);
+                } else {
+                    hiddenList.remove(folder.getPath());
+                    tinydb.putListString("hiddenList", hiddenList);
+                    saved.remove(folder.getPath());
+                    tinydb.putListString("saved", saved);
+                }
             }
         });
 
-        /*
         viewHolder.v.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (folder.getPath().contains(mPath.get(0).getAbsolutePath()))
-                    if (folder.isHidden())
-                        createAndShowAlertDialog("Would you like to unhide this folder?", "(This will make the folder show in other apps as well)", position);
-                    else
-                        createAndShowAlertDialog("Would you like to hide this folder?", "(This will make the folder not show in other apps as well)", position);
-                else
-                    Toast.makeText(mContext, "Sorry! Hiding external SD card folders is not supported yet!", Toast.LENGTH_SHORT).show();
+                if (folder.getPath().contains(mPath.get(0).getAbsolutePath())) {
+                    if (folderFile.exists()) {
+                        if (folder.isHidden() || hiddenList.contains(folder.getPath()))
+                            createAndShowAlertDialog("Would you like to unhide this folder?", "(This will make the folder show in other apps as well)", position);
+                        else
+                            createAndShowAlertDialog("Would you like to hide this folder?", "(This will make the folder not show in other apps as well)", position);
+                    }
+                } else {
+                        Toast.makeText(mContext, "Sorry! Hiding external SD card folders is not supported yet!", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
-        });*/
+        });
 
         viewHolder.checkBox.setChecked(set.contains(folder.getPath()));
         viewHolder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -182,15 +205,42 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
             public void onClick(DialogInterface dialog, int id) {
                 String path = getItem(pos).getPath();
                 File nomedia = new File(path + "/.nomedia");
+                File parent = new File(path);
                 hidden = mFoldersList.get(pos).isHidden();
                 if (hidden) {
-                    //Log.d("MEME",Uri.parse(PrefHelper.getSdCardPath(mContext)).getPath());
-                    new DeleteNomediaaSync().execute(path);
-                    DocumentFile.fromFile(nomedia).delete();
+                    boolean deleted = nomedia.delete();
+                    Log.d("meme", deleted + "");
+                    if (parent.isHidden()) {
+                        Log.e("rename", "" + parent.renameTo(new File(parent.getParentFile(), parent.getName().replaceFirst(".", ""))));
+                        File newParent = new File(nomedia.getParent());
+                        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(newParent)));
+                    } else if (deleted) {
+                        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(nomedia)));
+                        hiddenList.remove(parent.getPath());
+                        tinydb.putListString("hiddenList", hiddenList);
+                        saved.remove(parent.getPath());
+                        tinydb.putListString("saved", saved);
+                    }
                 } else {
-                    Log.d("imagepath", path);
-                    DocumentFile.fromFile(new File(path + "/")).createFile("none", ".nomedia");
-                    new DeleteNomediaaSync().execute(path);
+                    boolean created = false;
+                    try {
+                        created = nomedia.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d("created", "" + created);
+
+                    if (created) {
+                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        Uri contentUri = Uri.fromFile(nomedia);
+                        scanIntent.setData(contentUri);
+                        mContext.sendBroadcast(scanIntent);
+
+                        hiddenList.add(parent.getPath());
+                        tinydb.putListString("hiddenList", hiddenList);
+                        saved.add(parent.getPath());
+                        tinydb.putListString("saved", saved);
+                    }
                 }
                 dialog.dismiss();
             }
@@ -210,87 +260,5 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.main_folder_layout, viewGroup, false));
     }
-
-    class DeleteNomediaaSync extends AsyncTask<String, Void, Void> {
-
-        ProgressDialog progressDialog;
-
-        @Override
-        protected Void doInBackground(String... params) {
-            final File file = new File(params[0], ".nomedia");
-            if (hidden) {
-                // Set up the projection (we only need the ID)
-                String[] projection = {MediaStore.Files.FileColumns._ID};
-
-// Match on the file path
-                String selection = MediaStore.Files.FileColumns.DATA + " = ?";
-                String[] selectionArgs = new String[]{file.getAbsolutePath()};
-
-                // Query for the ID of the media matching the file path
-                Uri queryUri = MediaStore.Files.getContentUri("external");
-                ContentResolver contentResolver = mContext.getContentResolver();
-                Cursor c = contentResolver.query(queryUri, projection, selection, selectionArgs, null);
-                if (c.moveToFirst()) {
-                    // We found the ID. Deleting the item via the content provider will also remove the file
-                    long id = c.getLong(c.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID));
-                    Uri deleteUri = ContentUris.withAppendedId(MediaStore.Files.getContentUri("external"), id);
-                    contentResolver.delete(deleteUri, null, null);
-                    mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-                } else {
-                    // File not found in media store DB
-                }
-                c.close();
-            } else {
-                //Log.d("MEME", nomedia.getAbsolutePath());
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
-                values.put(MediaStore.Files.FileColumns.MEDIA_TYPE, 0);
-                mContext.getContentResolver().insert(MediaStore.Files.getContentUri("external"), values);
-                Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                Uri contentUri = Uri.fromFile(file);
-                scanIntent.setData(contentUri);
-            }
-
-            ArrayList<String> paths = new ArrayList<>();
-            paths.add("file://" + params[0] + File.separator + ".nomedia");
-            paths.add("file://" + new File(params[0]).getParent());
-
-            File[] files = new File(params[0]).listFiles();
-            for (File temp : files)
-                paths.add("file://" + temp.getAbsolutePath());
-
-            MediaScannerConnection.scanFile(mContext, paths.toArray(new String[paths.size()]), null, new MediaScannerConnection.OnScanCompletedListener()
-
-            {
-                @Override
-                public void onScanCompleted(String path, Uri uri) {
-                    System.out.println("SCAN COMPLETED: " + path);
-                }
-            });
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressDialog = ProgressDialog.show(mContext, "Unhiding folder...",
-                    "Please wait...", true);
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
-            }
-        }
-    }
-
 }
 

@@ -21,7 +21,7 @@ public class StringUtil {
         try {
             return file.substring(file.lastIndexOf(".") + 1);
         } catch (Exception e) {
-            return "";
+            return file;
         }
     }
 }

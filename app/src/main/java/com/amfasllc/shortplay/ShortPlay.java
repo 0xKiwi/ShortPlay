@@ -9,10 +9,10 @@ public class ShortPlay extends Application {
     public void onCreate() {
         super.onCreate();
         Colorful.defaults()
-                .primaryColor(Colorful.ThemeColor.INDIGO)
-                .accentColor(Colorful.ThemeColor.RED)
+                .primaryColor(Colorful.ThemeColor.DEEP_BLUE)
+                .accentColor(Colorful.ThemeColor.PINK)
                 .translucent(false)
-                .dark(false);
+                .dark(true);
         Colorful.init(this);
     }
 }

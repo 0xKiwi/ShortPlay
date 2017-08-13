@@ -34,12 +34,14 @@ import com.google.android.gms.ads.MobileAds;
 
 import org.polaric.colorful.ColorfulActivity;
 
+import static com.amfasllc.shortplay.helpers.Utils.getNavHeight;
+import static com.amfasllc.shortplay.helpers.Utils.hasNavBar;
+
 public class MainActivity extends ColorfulActivity implements FingerprintDialog.Callback, DigitusCallback {
 
     private SwipeRefreshLayout swipeContainer;
 
     private boolean hidden = false;
-
     private boolean first = false;
 
     private RecyclerView folderList;
@@ -60,109 +62,31 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
             MobileAds.setAppVolume(0.3f);
         }
 
+        callback = this;
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        folderList = (RecyclerView) findViewById(R.id.folderList);
 
+        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 startList(true);
             }
         });
-
         swipeContainer.setColorSchemeResources(R.color.colorAccent,
                 android.R.color.holo_green_light,
                 android.R.color.holo_orange_light,
                 android.R.color.holo_red_light);
 
-        callback = this;
-
-        folderList = (RecyclerView) findViewById(R.id.folderList);
-
-        //if(PrefHelper.getSdCardPath(this).equals("none")){
-        //    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        //    startActivityForResult(intent, 60);
-        //}
         if (PrefHelper.getIfWholeAppSecure(this)) {
             first = true;
             securityCheck(false);
         } else {
             startList(false);
         }
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        if (resultCode != RESULT_OK)
-            return;
-        if (Build.VERSION.SDK_INT >= 19) {
-            Uri treeUri = resultData.getData();
-            grantUriPermission(getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            PrefHelper.setSdCardPath(this, treeUri.toString());
-            getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        } else if (id == R.id.action_hidden) {
-            if (PrefHelper.getIfSecure(this) && !item.isChecked()) {
-                if (PrefHelper.getIfHiddenSecure(this)) {
-                    this.item = item;
-                    securityCheck(true);
-                }
-            } else {
-                hidden = !hidden;
-                item.setChecked(hidden);
-                startList(false);
-            }
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    private boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
-    }
-
-    private void checkPermission(final String string, boolean refresh) {
-        if (checkSelfPermission(string) != PackageManager.PERMISSION_GRANTED) {
-            if (!shouldShowRequestPermissionRationale(string)) {
-                showMessageOKCancel("You need to allow access to External Storage");
-                return;
-            }
-            requestPermissions(new String[]{string, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    435);
-        } else {
-            new AdapterASyncTask().execute(refresh);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            new AdapterASyncTask().execute(true);
-            Digitus.get().handleResult(requestCode, permissions, grantResults);
-        } else {
-            showSnack();
-        }
-        // Notify Digitus of the result
     }
 
     private class AdapterASyncTask extends AsyncTask<Boolean, Void, Void> {
@@ -182,7 +106,6 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             swipeContainer.setRefreshing(false);
-            folderList.setHasFixedSize(true);
             folderList.setLayoutManager(new LinearLayoutManager(callback));
             folderList.setAdapter(adapter);
 
@@ -194,20 +117,24 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
     private void startList(boolean refresh) {
         if (Build.VERSION.SDK_INT >= 23)
             checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, refresh);
-        /*if (StorageProvider.getStorageRoots(this).size() > 1) {
-            if (PrefHelper.getSdCardPath(this).equals("none")) {
-                if (Build.VERSION.SDK_INT >= 21) {
-                    startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 42);
-                }
-            }*/
-        else if (isExternalStorageReadable())
-            new AdapterASyncTask().execute(refresh);
-        else if (!isExternalStorageReadable()) {
-            if (Build.VERSION.SDK_INT >= 21) {
-                Toast.makeText(this, "Please allow permission to the SD Card", Toast.LENGTH_SHORT).show();
-                startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 42);
-            }
+        else if (isExternalStorageReadable()) {
+            if(hidden)
+                new AdapterASyncTask().execute(refresh);
+            else
+                runListMainThread();
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            new AdapterASyncTask().execute(true);
+            Digitus.get().handleResult(requestCode, permissions, grantResults);
+        } else {
+            showSnack();
+        }
+        // Notify Digitus of the result
     }
 
     private void securityCheck(final boolean isHidden) {
@@ -256,44 +183,10 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
         }
     }
 
-    @Override
-    public void onDigitusReady(Digitus digitus) {
-
-    }
-
-    @Override
-    public void onDigitusListening(boolean newFingerprint) {
-
-    }
-
-    private void showSnack() {
-        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.main),
-                "Storage permission is required to use ShortPlay",
-                Snackbar.LENGTH_INDEFINITE);
-        mySnackbar.setAction("Enable", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startList(false);
-            }
-        });
-        mySnackbar.show();
-    }
-
-    @Override
-    public void onDigitusAuthenticated(Digitus digitus) {
-        hidden = !hidden;
-        if (item != null)
-            item.setChecked(hidden);
-
-        if (!first) {
-            new AdapterASyncTask().execute(false);
-            first = false;
-        }
-    }
-
-    @Override
-    public void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e) {
-
+    private void runListMainThread(){
+        adapter = new FolderAdapter(callback, false, false);
+        folderList.setLayoutManager(new LinearLayoutManager(callback));
+        folderList.setAdapter(adapter);
     }
 
     @Override
@@ -305,6 +198,15 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
     @Override
     public void onResume() {
         super.onResume();
+        if (!hidden)
+            if (folderList != null)
+                if (Build.VERSION.SDK_INT >= 23) {
+                    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                        startList(false);
+                    }
+                } else {
+                    startList(false);
+                }
     }
 
     private void showMessageOKCancel(String message) {
@@ -328,6 +230,65 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            first = false;
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        } else if (id == R.id.action_hidden) {
+            first = false;
+            swipeContainer.setRefreshing(false);
+            if (PrefHelper.getIfSecure(this) && !item.isChecked()) {
+                if (PrefHelper.getIfHiddenSecure(this)) {
+                    this.item = item;
+                    securityCheck(true);
+                }
+            } else {
+                hidden = !hidden;
+                item.setChecked(hidden);
+                startList(false);
+            }
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDigitusReady(Digitus digitus) {
+
+    }
+
+    @Override
+    public void onDigitusListening(boolean newFingerprint) {
+
+    }
+
+    @Override
+    public void onDigitusAuthenticated(Digitus digitus) {
+        hidden = !hidden;
+        if (item != null)
+            item.setChecked(hidden);
+
+        if (!first) {
+            new AdapterASyncTask().execute(false);
+        }
+    }
+
+    @Override
+    public void onDigitusError(Digitus digitus, DigitusErrorType type, Exception e) {
+
+    }
+
+    @Override
     public void onFingerprintDialogAuthenticated() {
         hidden = !hidden;
         if (item != null)
@@ -335,7 +296,6 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
 
         if (!first) {
             new AdapterASyncTask().execute(false);
-            first = false;
         }
     }
 
@@ -348,9 +308,7 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
     }
 
     @Override
-    public void onFingerprintDialogStageUpdated(FingerprintDialog dialog, FingerprintDialog.Stage stage) {
-
-    }
+    public void onFingerprintDialogStageUpdated(FingerprintDialog dialog, FingerprintDialog.Stage stage) {}
 
     @Override
     public void onFingerprintDialogCancelled() {
@@ -358,6 +316,50 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
             this.finish();
             System.exit(0);
         }
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        /*if (resultCode != RESULT_OK)
+            return;
+        if (Build.VERSION.SDK_INT >= 19 && requestCode == 42) {
+            Uri treeUri = resultData.getData();
+            grantUriPermission(getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            PrefHelper.setSdCardPath(this, treeUri.toString());
+            getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }*/
+    }
+
+
+    private void showSnack() {
+        Snackbar mySnackbar = Snackbar.make(findViewById(R.id.main),
+                "Storage permission is required to use ShortPlay",
+                Snackbar.LENGTH_INDEFINITE);
+        mySnackbar.setAction("Enable", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startList(false);
+            }
+        });
+        mySnackbar.show();
+    }
+
+    private void checkPermission(final String string, boolean refresh) {
+        if (checkSelfPermission(string) != PackageManager.PERMISSION_GRANTED) {
+            if (!shouldShowRequestPermissionRationale(string)) {
+                showMessageOKCancel("You need to allow access to External Storage");
+                return;
+            }
+            requestPermissions(new String[]{string, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    435);
+        } else {
+            new AdapterASyncTask().execute(refresh);
+        }
+    }
+
+    private boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
 }

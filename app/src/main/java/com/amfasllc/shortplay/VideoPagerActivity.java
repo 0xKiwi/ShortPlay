@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
@@ -31,10 +32,16 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.amfasllc.shortplay.helpers.StorageProvider;
+import com.amfasllc.shortplay.helpers.Utils;
 
 import org.polaric.colorful.ColorfulActivity;
 
 import java.util.ArrayList;
+
+import static com.amfasllc.shortplay.helpers.Utils.getNavHeight;
+import static com.amfasllc.shortplay.helpers.Utils.getThemePrimaryColor;
+import static com.amfasllc.shortplay.helpers.Utils.getThemePrimaryDarkColor;
+import static com.amfasllc.shortplay.helpers.Utils.hasNavBar;
 
 public class VideoPagerActivity extends ColorfulActivity {
 
@@ -108,6 +115,17 @@ public class VideoPagerActivity extends ColorfulActivity {
         setMargins(toolbar);
     }
 
+    private void getVideos() {
+        videos = StorageProvider.getVideosOfHiddenFolders(videoFolder, sort, time);
+        if (videos.size() == 0) {
+            videos = StorageProvider.getVideosOfFolder(
+                    StorageProvider.getRealPathFromURI(this, Uri.parse(videoFolder)), this, sort);
+            hidden = false;
+        } else {
+            hidden = true;
+        }
+    }
+
     private void setupVideoList() {
         videoList = (RecyclerView) findViewById(R.id.videoList);
 
@@ -148,29 +166,16 @@ public class VideoPagerActivity extends ColorfulActivity {
         });
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        setRotate(menu.findItem(R.id.action_rotate));
-
-        setMargins(toolbar);
-
-        if (android.os.Build.VERSION.SDK_INT >= 21) {
-            getWindow().setNavigationBarColor(getThemePrimaryColor(this));
-            getWindow().setStatusBarColor(getThemePrimaryDarkColor(this));
-        }
-    }
-
     private void setMargins(Toolbar toolbar) {
         RelativeLayout.LayoutParams parameterLoop = (RelativeLayout.LayoutParams) toolbar.getLayoutParams();
         RelativeLayout.LayoutParams videoListMargin = (RelativeLayout.LayoutParams) listContainer.getLayoutParams();
 
-        navHeight = hasNavBar(getResources()) ? getNavHeight(getResources()) : 0;
+        navHeight = hasNavBar() ? getNavHeight(getResources()) : 16;
 
         Configuration configuration = getResources().getConfiguration();
         if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             //setMargins(mMediaController, 0, 0, 0, height);
-            parameterLoop.setMargins(0, getStatusBarHeight(), 0, 0); // left, top, right, bottom
+            parameterLoop.setMargins(0, Utils.getStatusBarHeight(getResources()), 0, 0); // left, top, right, bottom
             videoListMargin.setMargins(0, parameterLoop.height / 2,
                     0, parameterLoop.height * 2 + navHeight);
             if (sized) {
@@ -179,29 +184,13 @@ public class VideoPagerActivity extends ColorfulActivity {
             }
         } else if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //setMargins(mMediaController, 0, 0, height, 0);
-            parameterLoop.setMargins(0, getStatusBarHeight(), navHeight, 4); // left, top, right, bottom
+            parameterLoop.setMargins(0, Utils.getStatusBarHeight(getResources()), navHeight, 4); // left, top, right, bottom
             videoListMargin.width = videoListMargin.width + 60;
             sized = true;
             videoListMargin.setMargins(0, 0, navHeight, (int) (parameterLoop.height * 1.75)); // left, top, right, bottom
         }
         listContainer.setLayoutParams(videoListMargin);
         toolbar.setLayoutParams(parameterLoop);
-    }
-
-    private boolean getIfAuto() {
-        return android.provider.Settings.System.getInt(getContentResolver(),
-                Settings.System.ACCELEROMETER_ROTATION, 0) == 1;
-    }
-
-    private void getVideos() {
-        videos = StorageProvider.getVideosOfHiddenFolders(videoFolder, sort, time);
-        if (videos.size() == 0) {
-            videos = StorageProvider.getVideosOfFolder(
-                    StorageProvider.getRealPathFromURI(this, Uri.parse(videoFolder)), this, sort);
-            hidden = false;
-        } else {
-            hidden = true;
-        }
     }
 
     public void hideSystemUI() {
@@ -253,6 +242,18 @@ public class VideoPagerActivity extends ColorfulActivity {
     }
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setRotate(menu.findItem(R.id.action_rotate));
+        setMargins(toolbar);
+
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            getWindow().setNavigationBarColor(getThemePrimaryColor(this));
+            getWindow().setStatusBarColor(getThemePrimaryDarkColor(this));
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.videoplay_menu, menu);
         this.menu = menu;
@@ -300,48 +301,6 @@ public class VideoPagerActivity extends ColorfulActivity {
             item.setIcon(R.drawable.rotate_left);
         else
             item.setIcon(R.drawable.rotate_right);
-    }
-
-    public static int getNavHeight(Resources resources) {
-        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            return resources.getDimensionPixelSize(resourceId);
-        }
-        return 0;
-    }
-
-    public static boolean hasNavBar(Resources resources) {
-        int id = resources.getIdentifier("config_showNavigationBar", "bool", "android");
-        return id > 0 && resources.getBoolean(id);
-    }
-
-    private int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    public static int adjustAlpha(int color, float factor) {
-        int alpha = Math.round(Color.alpha(color) * factor);
-        int red = Color.red(color);
-        int green = Color.green(color);
-        int blue = Color.blue(color);
-        return Color.argb(alpha, red, green, blue);
-    }
-
-    public static int getThemePrimaryColor(final Context context) {
-        final TypedValue value = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.colorPrimary, value, true);
-        return value.data;
-    }
-
-    public static int getThemePrimaryDarkColor(final Context context) {
-        final TypedValue value = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.colorPrimaryDark, value, true);
-        return value.data;
     }
 
     @Override

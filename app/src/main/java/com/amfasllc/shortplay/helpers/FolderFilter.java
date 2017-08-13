@@ -10,6 +10,6 @@ class FolderFilter implements FileFilter {
 
     @Override
     public boolean accept(File pathname) {
-        return pathname.isDirectory() || pathname.getName().toLowerCase().equals(".nomedia");
+        return pathname.isDirectory() || pathname.getName().toLowerCase().equals(".nomedia") || pathname.isHidden();
     }
 }

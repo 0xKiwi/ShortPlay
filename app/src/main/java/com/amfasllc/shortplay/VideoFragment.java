@@ -25,10 +25,11 @@ import android.widget.VideoView;
 import com.amfasllc.shortplay.helpers.PrefHelper;
 
 import java.util.ArrayList;
+
 import android.os.Handler;
 
-import static com.amfasllc.shortplay.VideoPagerActivity.getNavHeight;
-import static com.amfasllc.shortplay.VideoPagerActivity.hasNavBar;
+import static com.amfasllc.shortplay.helpers.Utils.getNavHeight;
+import static com.amfasllc.shortplay.helpers.Utils.hasNavBar;
 
 public class VideoFragment extends Fragment {
 
@@ -77,16 +78,13 @@ public class VideoFragment extends Fragment {
 
         RelativeLayout main = (RelativeLayout) view.findViewById(R.id.main);
 
-        if (playthrough >= videos.size()) {
+        if (playthrough >= videos.size())
             playthrough = videos.size() - 1;
-            videoView.setVideoURI(videos.get(playthrough).getUri());
-        } else if (playthrough <= -1) {
+        else if (playthrough <= -1)
             playthrough = 0;
-            videoView.setVideoURI(videos.get(0).getUri());
-        } else {
-            videoView.setVideoURI(videos.get(playthrough).getUri());
-        }
+        videoView.setVideoURI(videos.get(playthrough).getUri());
         videoView.setMediaController(mMediaController);
+
         mMediaController.setMediaPlayer(videoView);
         mMediaController.setAnchorView(main);
 
@@ -96,40 +94,8 @@ public class VideoFragment extends Fragment {
         return view;
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        setMargins();
-        mMediaController.show();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                videoView.seekTo(position - 100);
-                if (!playing && !first)
-                    videoView.pause();
-                else
-                    videoView.resume();
-                first = false;
-            }
-        }, 100);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        playing = videoView.isPlaying();
-        position = videoView.getCurrentPosition();
-        videoView.pause();
-    }
-
     private void setMargins() {
-        int height = hasNavBar(getResources()) ? getNavHeight(getResources()) : 0;
+        int height = hasNavBar() ? getNavHeight(getResources()) : 16;
 
         Configuration configuration = getResources().getConfiguration();
         if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -147,9 +113,26 @@ public class VideoFragment extends Fragment {
         }
     }
 
+    public boolean checkForAd() {
+        if (!PrefHelper.getIfAdsRemoved(getActivity()))
+            if (isConnectingToInternet(getActivity()))
+                if (adCount % 22 == 0) {
+                    adCount = 0;
+                    FragmentManager fragmentManager = getFragmentManager();
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                    AdFragment fragment = new AdFragment().newInstance(playthrough, videos, adCount + 1, showing);
+                    fragmentTransaction.replace(R.id.fragment_video, fragment, "ad_fragment");
+                    fragmentTransaction.commit();
+                    return true;
+                }
+        return false;
+    }
+
+
     public void changeVideo() {
         videoView.stopPlayback();
 
+        ((VideoPagerActivity) getActivity()).videoList.scrollToPosition(playthrough);
         ((VideoPagerActivity) getActivity()).playThrough = playthrough;
         videoView.setVideoURI(videos.get(playthrough).getUri());
 
@@ -177,21 +160,6 @@ public class VideoFragment extends Fragment {
                 getActivity().invalidateOptionsMenu();
             }
         }
-    }
-
-    public boolean checkForAd() {
-        if (!PrefHelper.getIfAdsRemoved(getActivity()))
-            if (isConnectingToInternet(getActivity()))
-                if (adCount % 14 == 0) {
-                    adCount = 0;
-                    FragmentManager fragmentManager = getFragmentManager();
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    AdFragment fragment = new AdFragment().newInstance(playthrough, videos, adCount + 1, showing);
-                    fragmentTransaction.replace(R.id.fragment_video, fragment, "ad_fragment");
-                    fragmentTransaction.commit();
-                    return true;
-                }
-        return false;
     }
 
     public void changeBackward() {
@@ -325,6 +293,42 @@ public class VideoFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setMargins();
+        if (showing)
+            mMediaController.show();
+        else
+            mMediaController.hide();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (!playing && !first)
+                    videoView.pause();
+                else {
+                    videoView.start();
+                }
+                videoView.seekTo(position - 200);
+                first = false;
+            }
+        }, 300);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        playing = videoView.isPlaying();
+        position = videoView.getCurrentPosition();
+        videoView.pause();
+    }
+
     private void toggleSystemUI() {
         if (showing)
             mMediaController.hide();
@@ -335,14 +339,6 @@ public class VideoFragment extends Fragment {
     public class CustomMediaController extends MediaController {
         private CustomMediaController(Context context) {
             super(new ContextThemeWrapper(context, R.style.MusicPlayer));
-        }
-
-        public void showController() {
-            super.show();
-        }
-
-        public void hideController() {
-            super.hide();
         }
 
         @Override

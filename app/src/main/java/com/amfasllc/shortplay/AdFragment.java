@@ -18,8 +18,10 @@ import com.google.android.gms.ads.AdView;
 
 import java.util.ArrayList;
 
-import static com.amfasllc.shortplay.VideoPagerActivity.getNavHeight;
-import static com.amfasllc.shortplay.VideoPagerActivity.hasNavBar;
+import static com.amfasllc.shortplay.helpers.Utils.getNavHeight;
+import static com.amfasllc.shortplay.helpers.Utils.getThemePrimaryColor;
+import static com.amfasllc.shortplay.helpers.Utils.getThemePrimaryDarkColor;
+import static com.amfasllc.shortplay.helpers.Utils.hasNavBar;
 
 public class AdFragment extends Fragment {
 
@@ -62,6 +64,7 @@ public class AdFragment extends Fragment {
             public void onAdLoaded() {
                 super.onAdLoaded();
                 canNext = true;
+                getActivity().findViewById(R.id.loader).setVisibility(View.GONE);
             }
 
             @Override
@@ -73,8 +76,8 @@ public class AdFragment extends Fragment {
         mAdView.loadAd(adRequest);
 
         if (android.os.Build.VERSION.SDK_INT >= 21) {
-            getActivity().getWindow().setNavigationBarColor(((VideoPagerActivity) getActivity()).getThemePrimaryColor(getActivity()));
-            getActivity().getWindow().setStatusBarColor(((VideoPagerActivity) getActivity()).getThemePrimaryDarkColor(getActivity()));
+            getActivity().getWindow().setNavigationBarColor(getThemePrimaryColor(getActivity()));
+            getActivity().getWindow().setStatusBarColor(getThemePrimaryDarkColor(getActivity()));
         }
 
         getActivity().getWindow().getDecorView().setSystemUiVisibility(
@@ -123,6 +126,7 @@ public class AdFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        mAdView.resume();
     }
 
     @Override
@@ -132,7 +136,7 @@ public class AdFragment extends Fragment {
     }
 
     private void setMargins() {
-        int height = hasNavBar(getResources()) ? getNavHeight(getResources()) : 0;
+        int height = hasNavBar() ? getNavHeight(getResources()) : 16;
 
         Configuration configuration = getResources().getConfiguration();
         if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {

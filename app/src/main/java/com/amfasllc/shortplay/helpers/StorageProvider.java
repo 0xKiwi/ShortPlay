@@ -1,7 +1,9 @@
 package com.amfasllc.shortplay.helpers;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -63,7 +65,7 @@ public class StorageProvider {
         if (mContext == null)
             return pictures;
 
-        Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        Uri uri = MediaStore.Video.Media.getContentUri("external");
         String[] projection = {MediaStore.Video.Media._ID,
                 MediaStore.Video.Media.BUCKET_ID,
                 MediaStore.Video.Media.DATE_MODIFIED,
@@ -163,12 +165,11 @@ public class StorageProvider {
     public static ArrayList<Folder> getAlbums(Context context, boolean hidden) {
         ArrayList<Folder> list = new ArrayList<>();
         ArrayList<File> roots = getStorageRoots(context);
+
         if (hidden) {
             //list.addAll(hiddenFolders(context));
             for (File storage : roots)
                 fetchRecursivelyHiddenFolder(storage, list);
-            if (list.size() == 0)
-                Toast.makeText(context, "There were no hidden videos found", Toast.LENGTH_LONG).show();
         } else
             list = getVideoFolders(context, GalleryAdapter.SORT_NAME_ASC);
         //for (File storage : roots)
@@ -197,25 +198,73 @@ public class StorageProvider {
             while (cursor.moveToNext()) {
                 String id = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.BUCKET_ID));
                 if (!ids.contains(id)) {
-                    final Folder curVideo = new Folder();
+                    final Folder curfolder = new Folder();
 
                     ids.add(id);
 
-                    int columnIndex = cursor.getColumnIndex(MediaStore.Video.VideoColumns
-                            .BUCKET_DISPLAY_NAME);
-                    curVideo.setName(cursor.getString(columnIndex));
+                    int columnIndex = cursor.getColumnIndex(MediaStore.Video.VideoColumns.BUCKET_DISPLAY_NAME);
+                    curfolder.setName(cursor.getString(columnIndex));
 
                     Integer _id = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media._ID));
                     Uri vidUri = Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, Integer.toString(_id));
-                    curVideo.setPath(new File(getRealPathFromURI(mContext, vidUri)).getParentFile().getAbsolutePath());
-
-                    pictures.add(curVideo);
+                    curfolder.setPath(new File(getRealPathFromURI(mContext, vidUri)).getParentFile().getAbsolutePath());
+                    curfolder.setHidden(false);
+                    pictures.add(curfolder);
                 }
             }
             cursor.close();
         }
 
         return pictures;
+    }
+
+    private static ArrayList<Folder> newFoldersSearch(Context context, String sort) {
+        final String FILE_TYPE_NO_MEDIA = ".mp4";
+
+        ArrayList<Folder> listOfHiddenFiles = new ArrayList<>();
+
+        String nonMediaCondition = MediaStore.Files.FileColumns.MEDIA_TYPE
+                + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+
+        String where = nonMediaCondition;
+                //+ " AND "
+                //+ MediaStore.Files.FileColumns.MEDIA_TYPE + " LIKE ?";
+
+        //String[] params = new String[]{"%" + FILE_TYPE_NO_MEDIA + "%"};
+
+        Cursor cursor = context.getContentResolver().query(
+                MediaStore.Files.getContentUri("external"),
+                new String[]{MediaStore.Files.FileColumns._ID,
+                        MediaStore.Files.FileColumns.DATA,
+                        MediaStore.Files.FileColumns.DISPLAY_NAME},
+                where,
+                null, sort);
+
+        // No Hidden file found
+        if (cursor.getCount() == 0) {
+            // showAll Nothing Found
+            return listOfHiddenFiles;
+        }
+
+        ArrayList<File> ids = new ArrayList<>();
+
+        // Add Hidden file name, path and directory in file object
+        while (cursor.moveToNext()) {
+            String id = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns._ID));
+
+            Uri vidUri = Uri.withAppendedPath(MediaStore.Files.getContentUri("external"), id);
+            File file = new File(getRealPathFromHiddenURI(context, vidUri)).getParentFile();
+            //Log.d("MEME", file.getAbsolutePath());
+
+            if (!ids.contains(file)) {
+                ids.add(file);
+
+                checkAndAddFolder(file, listOfHiddenFiles, true);
+            }
+        }
+        cursor.close();
+
+        return listOfHiddenFiles;
     }
 
     /**
@@ -276,7 +325,9 @@ public class StorageProvider {
         File[] folders = dir.listFiles(new FolderFilter());
         if (folders != null) {
             for (File temp : folders) {
-                if (temp.isDirectory())
+                if (temp.isDirectory() && temp.isHidden())
+                    checkAndAddFolder(temp, albumArrayList, true);
+                else if (temp.isDirectory())
                     fetchRecursivelyHiddenFolder(temp, albumArrayList);
                 else
                     checkAndAddFolder(temp.getParentFile(), albumArrayList, true);
