@@ -8,6 +8,7 @@ import com.amfasllc.shortplay.GalleryAdapter;
 public abstract class PrefHelper {
     private static final String SD_CARD_PATH = "sd_card_path";
     private static final String REMOVE_ADS = "removeads";
+    private static final String LOOP_DEFAULT = "loopDefault";
     private static final String SWIPE_GESTURE = "swipeGesture";
 
     private static final String SECURE_FUNCTIONS = "secure";
@@ -41,6 +42,15 @@ public abstract class PrefHelper {
 
     public static void setIfAdsRemoved(Context context, boolean removed) {
         PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(REMOVE_ADS, removed).apply();
+    }
+
+    public static boolean getIfLoopDefault(Context context) {
+        return context != null && PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(LOOP_DEFAULT, false);
+    }
+
+    public static void setIfLoopDefault(Context context, boolean removed) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(LOOP_DEFAULT, removed).apply();
     }
 
     public static void setSecureMethod(Context context, String method) {

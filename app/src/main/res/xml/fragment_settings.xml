@@ -31,6 +31,10 @@
             android:title="Show video list on left" />
 
         <CheckBoxPreference
+            android:key="loopDefault"
+            android:title="Loop videos by default" />
+
+        <CheckBoxPreference
             android:key="swipeGesture"
             android:defaultValue="true"
             android:title="Enable swipe left/right to skip" />

@@ -31,6 +31,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.amfasllc.shortplay.helpers.PrefHelper;
 import com.amfasllc.shortplay.helpers.StorageProvider;
 import com.amfasllc.shortplay.helpers.Utils;
 
@@ -97,18 +98,10 @@ public class VideoPagerActivity extends ColorfulActivity {
 
         setupVideoList();
 
+        setupFragment();
+
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-        FragmentManager fragmentManager = getFragmentManager();
-        VideoFragment fragment = (VideoFragment) fragmentManager.findFragmentByTag("video_fragment");
-        if (fragment == null) {
-            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-            VideoFragment parentFragment = new VideoFragment().newInstance(playThrough, videos, false, 4);
-            parentFragment.setRetainInstance(true);
-            fragmentTransaction.replace(R.id.fragment_video, parentFragment, "video_fragment");
-            fragmentTransaction.commit();
-        }
 
         toolbar.getRootView().setBackgroundColor(Color.BLACK);
 
@@ -158,12 +151,25 @@ public class VideoPagerActivity extends ColorfulActivity {
                 VideoFragment fragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
                 if (fragment != null) {
                     fragment.changeVideo(position);
-                    mIsLooping = false;
+                    mIsLooping = PrefHelper.getIfLoopDefault(getApplicationContext());
                     invalidateOptionsMenu();
                     fragment.checkForAd();
                 }
             }
         });
+    }
+
+    private void setupFragment() {
+        FragmentManager fragmentManager = getFragmentManager();
+        VideoFragment fragment = (VideoFragment) fragmentManager.findFragmentByTag("video_fragment");
+
+        if (fragment == null) {
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            VideoFragment parentFragment = new VideoFragment().newInstance(playThrough, videos, false, 4);
+            parentFragment.setRetainInstance(true);
+            fragmentTransaction.replace(R.id.fragment_video, parentFragment, "video_fragment");
+            fragmentTransaction.commit();
+        }
     }
 
     private void setMargins(Toolbar toolbar) {
