@@ -9,8 +9,14 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_rotate"
-        android:orderInCategory="100"
+        android:orderInCategory="50"
         android:title="@string/action_rotate"
         android:icon="@drawable/orientation_icon"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_delete"
+        android:orderInCategory="100"
+        android:title="@string/action_delete"
+        android:icon="@drawable/ic_delete"
         app:showAsAction="ifRoom" />
 </menu>

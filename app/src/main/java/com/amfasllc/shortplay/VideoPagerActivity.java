@@ -31,6 +31,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.amfasllc.shortplay.helpers.FileHelper;
 import com.amfasllc.shortplay.helpers.PrefHelper;
 import com.amfasllc.shortplay.helpers.StorageProvider;
 import com.amfasllc.shortplay.helpers.Utils;
@@ -285,11 +286,12 @@ public class VideoPagerActivity extends ColorfulActivity {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
             setRotate(item);
-        } else if (id == android.R.id.home)
-
-        {
+        } else if (id == android.R.id.home) {
             this.finish();
             return true;
+
+        } else if (id == R.id.action_delete) {
+            FileHelper.deleteFile(this, videos.get(playThrough).file.getAbsolutePath());
         }
 
         return super.onOptionsItemSelected(item);

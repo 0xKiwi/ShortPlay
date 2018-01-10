@@ -5,6 +5,7 @@
     <string name="action_hidden">Show hidden</string>
     <string name="action_loop">Loop</string>
     <string name="action_rotate">Rotate</string>
+    <string name="action_delete">Delete</string>
 
     <string name="primary_color">Primary Color</string>
     <string name="accent_color">Accent Color</string>
