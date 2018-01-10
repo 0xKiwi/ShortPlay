@@ -70,11 +70,6 @@ public class GalleryActivity extends ColorfulActivity {
 
         context = this;
         new AdapterASyncTask().execute();
-
-        /*new MaterialScrollBar(this, recyclerView, true).setBarThickness(8).
-                setAutoHide(true).setBarColour(accentColor()).setHandleOffColour(accentColor()).
-                setHandleColour(accentColor());
-                */
     }
 
 

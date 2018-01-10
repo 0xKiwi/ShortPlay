@@ -121,7 +121,7 @@ public class VideoFragment extends Fragment {
     public boolean checkForAd() {
         if (!PrefHelper.getIfAdsRemoved(getActivity()))
             if (isConnectingToInternet(getActivity()))
-                if (adCount % 22 == 0) {
+                if (adCount % 17 == 0) {
                     adCount = 0;
                     FragmentManager fragmentManager = getFragmentManager();
                     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
