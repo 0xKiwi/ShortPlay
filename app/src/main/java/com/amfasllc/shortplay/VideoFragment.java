@@ -5,12 +5,16 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -24,6 +28,7 @@ import android.widget.VideoView;
 
 import com.amfasllc.shortplay.helpers.PrefHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import android.os.Handler;
@@ -291,6 +296,36 @@ public class VideoFragment extends Fragment {
             main.findViewById(R.id.rightListener).setOnTouchListener(swipe);
             main.findViewById(R.id.leftListener).setOnTouchListener(swipe);
         }
+    }
+
+    public void deleteFile() {
+        final String path = videos.get(playthrough).file.getAbsolutePath();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Delete File");
+        builder.setMessage("Are you sure you want to remove this file?");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                File file = new File(path);
+                boolean deleted = file.delete();
+                if(videos.size() > 1 && deleted) {
+                    videos.remove(playthrough);
+                    ((VideoPagerActivity) getActivity()).videoList.getAdapter().notifyDataSetChanged();
+                    changeVideo(playthrough);
+                } else {
+                    startActivity(new Intent(getActivity(), MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK));
+                }
+                Log.d("Meme", deleted + "");
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override

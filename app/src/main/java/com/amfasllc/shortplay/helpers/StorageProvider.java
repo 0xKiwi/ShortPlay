@@ -66,11 +66,13 @@ public class StorageProvider {
             return pictures;
 
         Uri uri = MediaStore.Video.Media.getContentUri("external");
-        String[] projection = {MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.BUCKET_ID,
-                MediaStore.Video.Media.DATE_MODIFIED,
-                MediaStore.Video.VideoColumns.DISPLAY_NAME,
-                MediaStore.Video.Media.DATA};
+        String[] projection = {
+            MediaStore.Video.Media._ID,
+            MediaStore.Video.Media.BUCKET_ID,
+            MediaStore.Video.Media.DATE_MODIFIED,
+            MediaStore.Video.VideoColumns.DISPLAY_NAME,
+            MediaStore.Video.Media.DATA
+        };
 
         path = path.substring(0, path.lastIndexOf("/") + 1);
         String folder = "%" + path + "%";
@@ -78,9 +80,9 @@ public class StorageProvider {
         String[] whereArgs = new String[]{folder};
 
         Cursor cursor = mContext.getContentResolver().query(uri, projection,
-                where,
-                whereArgs,
-                sort);
+            where,
+            whereArgs,
+            sort);
 
         ArrayList<String> ids = new ArrayList<>();
         pictures.clear();
@@ -207,9 +209,11 @@ public class StorageProvider {
 
                     Integer _id = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media._ID));
                     Uri vidUri = Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, Integer.toString(_id));
-                    curfolder.setPath(new File(getRealPathFromURI(mContext, vidUri)).getParentFile().getAbsolutePath());
+                    File file = new File(getRealPathFromURI(mContext, vidUri));
+                    curfolder.setPath(file.getParentFile().getAbsolutePath());
                     curfolder.setHidden(false);
-                    pictures.add(curfolder);
+                    if(file.exists())
+                        pictures.add(curfolder);
                 }
             }
             cursor.close();

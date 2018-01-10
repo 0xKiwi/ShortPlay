@@ -202,14 +202,17 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
         builder.setTitle(title);
         builder.setMessage(text);
         builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
             public void onClick(DialogInterface dialog, int id) {
                 String path = getItem(pos).getPath();
                 File nomedia = new File(path + "/.nomedia");
                 File parent = new File(path);
                 hidden = mFoldersList.get(pos).isHidden();
+
                 if (hidden) {
                     boolean deleted = nomedia.delete();
                     Log.d("meme", deleted + "");
+
                     if (parent.isHidden()) {
                         Log.e("rename", "" + parent.renameTo(new File(parent.getParentFile(), parent.getName().replaceFirst(".", ""))));
                         File newParent = new File(nomedia.getParent());
@@ -223,6 +226,7 @@ public class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.ViewHolder
                     }
                 } else {
                     boolean created = false;
+
                     try {
                         created = nomedia.createNewFile();
                     } catch (IOException e) {

@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -53,7 +54,7 @@ public class VideoPagerActivity extends ColorfulActivity {
     private boolean onLeft = false;
     private boolean sized = false;
 
-    int playThrough = 0;
+    public int playThrough = 0;
     int navHeight = 0;
 
     long time;
@@ -68,7 +69,7 @@ public class VideoPagerActivity extends ColorfulActivity {
     public ArrayList<Video> videos;
 
     private LinearLayout listContainer;
-    RecyclerView videoList;
+    public RecyclerView videoList;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -121,6 +122,7 @@ public class VideoPagerActivity extends ColorfulActivity {
     }
 
     private void setupVideoList() {
+        final VideoFragment fragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
         videoList = (RecyclerView) findViewById(R.id.videoList);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -138,7 +140,6 @@ public class VideoPagerActivity extends ColorfulActivity {
         videoList.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                VideoFragment fragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
                 if (fragment != null)
                     fragment.mMediaController.show();
                 return false;
@@ -149,7 +150,6 @@ public class VideoPagerActivity extends ColorfulActivity {
             @Override
             public void onItemClicked(RecyclerView recyclerView, int position, View v) {
                 playThrough = position;
-                VideoFragment fragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
                 if (fragment != null) {
                     fragment.changeVideo(position);
                     mIsLooping = PrefHelper.getIfLoopDefault(getApplicationContext());
@@ -289,9 +289,10 @@ public class VideoPagerActivity extends ColorfulActivity {
         } else if (id == android.R.id.home) {
             this.finish();
             return true;
-
         } else if (id == R.id.action_delete) {
-            FileHelper.deleteFile(this, videos.get(playThrough).file.getAbsolutePath());
+            FragmentManager fragmentManager = getFragmentManager();
+            VideoFragment fragment = (VideoFragment) fragmentManager.findFragmentByTag("video_fragment");
+            fragment.deleteFile();
         }
 
         return super.onOptionsItemSelected(item);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.annotation.UiThread;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -58,6 +59,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         }
         mContext = context;
         mSortMode = sort;
+    }
+
+    @UiThread
+    public void notifyDataChange(){
+        notifyDataSetChanged();
     }
 
     @Override

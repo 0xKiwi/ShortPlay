@@ -1,8 +1,11 @@
 package com.amfasllc.shortplay;
 
+import android.*;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -72,6 +75,13 @@ public class GalleryActivity extends ColorfulActivity {
                 setAutoHide(true).setBarColour(accentColor()).setHandleOffColour(accentColor()).
                 setHandleColour(accentColor());
                 */
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        new AdapterASyncTask().execute();
     }
 
     @Override
