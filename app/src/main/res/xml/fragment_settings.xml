@@ -43,10 +43,6 @@
             android:key="security"
             android:title="Security settings" />
 
-        <Preference
-            android:key="removeads"
-            android:title="Remove ads" />
-
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Other">

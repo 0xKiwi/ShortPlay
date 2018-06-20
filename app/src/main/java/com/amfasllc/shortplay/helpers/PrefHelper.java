@@ -7,7 +7,6 @@ import com.amfasllc.shortplay.GalleryAdapter;
 
 public abstract class PrefHelper {
     private static final String SD_CARD_PATH = "sd_card_path";
-    private static final String REMOVE_ADS = "removeads";
     private static final String LOOP_DEFAULT = "loopDefault";
     private static final String SWIPE_GESTURE = "swipeGesture";
 
@@ -35,15 +34,6 @@ public abstract class PrefHelper {
                 .getBoolean(SECURE_HIDDEN, false);
     }
 
-    public static boolean getIfAdsRemoved(Context context) {
-        return context != null && PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean(REMOVE_ADS, false);
-    }
-
-    public static void setIfAdsRemoved(Context context, boolean removed) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(REMOVE_ADS, removed).apply();
-    }
-
     public static boolean getIfLoopDefault(Context context) {
         return context != null && PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(LOOP_DEFAULT, false);
@@ -65,20 +55,6 @@ public abstract class PrefHelper {
 
         return PreferenceManager.getDefaultSharedPreferences(context).getString
                 (SECURE_METHOD, "none");
-    }
-
-    public static void setSdCardPath(Context context, String path) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putString
-                (SD_CARD_PATH, path).apply();
-    }
-
-    public static String getSdCardPath(Context context) {
-        if (context == null) {
-            return "none";
-        }
-
-        return PreferenceManager.getDefaultSharedPreferences(context).getString
-                (SD_CARD_PATH, "none");
     }
 
     public static boolean getIfWholeAppSecure(Context context) {

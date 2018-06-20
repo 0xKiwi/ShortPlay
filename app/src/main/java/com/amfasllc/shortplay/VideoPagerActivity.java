@@ -2,25 +2,18 @@ package com.amfasllc.shortplay;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -29,10 +22,8 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.amfasllc.shortplay.helpers.FileHelper;
 import com.amfasllc.shortplay.helpers.PrefHelper;
 import com.amfasllc.shortplay.helpers.StorageProvider;
 import com.amfasllc.shortplay.helpers.Utils;
@@ -75,6 +66,7 @@ public class VideoPagerActivity extends ColorfulActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video_main_pager);
+        mIsLooping = PrefHelper.getIfLoopDefault(getApplicationContext());
 
         decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
@@ -82,10 +74,10 @@ public class VideoPagerActivity extends ColorfulActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        listContainer = (LinearLayout) findViewById(R.id.listContainer);
+        listContainer = findViewById(R.id.listContainer);
         listContainer.setVisibility(View.GONE);
 
         Bundle mainData = getIntent().getExtras();
@@ -97,9 +89,7 @@ public class VideoPagerActivity extends ColorfulActivity {
         playThrough = mainData.getInt("position");
 
         getVideos();
-
         setupVideoList();
-
         setupFragment();
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -123,7 +113,7 @@ public class VideoPagerActivity extends ColorfulActivity {
 
     private void setupVideoList() {
         final VideoFragment fragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
-        videoList = (RecyclerView) findViewById(R.id.videoList);
+        videoList = findViewById(R.id.videoList);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         if (prefs.getBoolean("videoOnLeft", false)) {
@@ -140,8 +130,12 @@ public class VideoPagerActivity extends ColorfulActivity {
         videoList.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (fragment != null)
+                if (fragment == null) {
+                    VideoFragment goodFragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
+                    goodFragment.mMediaController.show();
+                } else {
                     fragment.mMediaController.show();
+                }
                 return false;
             }
         });
@@ -150,11 +144,19 @@ public class VideoPagerActivity extends ColorfulActivity {
             @Override
             public void onItemClicked(RecyclerView recyclerView, int position, View v) {
                 playThrough = position;
-                if (fragment != null) {
+                if (fragment == null) {
+                    VideoFragment goodFragment = ((VideoFragment) getFragmentManager().findFragmentByTag("video_fragment"));
+                    if (goodFragment.mMediaController.isShowing()) {
+                        goodFragment.mMediaController.show();
+                        goodFragment.changeVideo(position);
+                        mIsLooping = PrefHelper.getIfLoopDefault(getApplicationContext());
+                    }
+                } else {
+                    if (fragment.mMediaController.isShowing()) {
+                        fragment.mMediaController.show();
+                    }
                     fragment.changeVideo(position);
                     mIsLooping = PrefHelper.getIfLoopDefault(getApplicationContext());
-                    invalidateOptionsMenu();
-                    fragment.checkForAd();
                 }
             }
         });
@@ -166,7 +168,7 @@ public class VideoPagerActivity extends ColorfulActivity {
 
         if (fragment == null) {
             FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-            VideoFragment parentFragment = new VideoFragment().newInstance(playThrough, videos, false, 4);
+            VideoFragment parentFragment = new VideoFragment().newInstance(playThrough, videos, false);
             parentFragment.setRetainInstance(true);
             fragmentTransaction.replace(R.id.fragment_video, parentFragment, "video_fragment");
             fragmentTransaction.commit();

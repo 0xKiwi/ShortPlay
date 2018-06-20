@@ -26,7 +26,7 @@ public class SettingsActivity extends ColorfulActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.preference_activity_custom);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -39,32 +39,14 @@ public class SettingsActivity extends ColorfulActivity {
         super.onResume();
     }
 
-    public static class MyPreferenceFragment extends PreferenceFragment implements BillingProcessor.IBillingHandler {
-        BillingProcessor bp;
+    public static class MyPreferenceFragment extends PreferenceFragment {
 
         @Override
         public void onCreate(final Bundle savedInstanceState) {
             Colorful.applyTheme(getActivity());
             super.onCreate(savedInstanceState);
-            boolean purchased = PrefHelper.getIfAdsRemoved(getActivity());
 
-            addPreferencesFromResource(purchased ? R.xml.paid_settings : R.xml.fragment_settings);
-
-            bp = new BillingProcessor(getActivity(), getResources().getString(R.string.licensekey), this);
-            bp.loadOwnedPurchasesFromGoogle();
-
-            if (!purchased)
-                findPreference("removeads").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                    @Override
-                    public boolean onPreferenceClick(Preference preference) {
-                        boolean isAvailable = BillingProcessor.isIabServiceAvailable(getActivity());
-                        if (isAvailable) {
-                            bp.purchase(getActivity(), getResources().getString(R.string.adproductid));
-                        } else
-                            Toast.makeText(getActivity(), "There was a problem accessing the Play Store", Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                });
+            addPreferencesFromResource(R.xml.fragment_settings);
 
             findPreference("contact").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
@@ -122,38 +104,6 @@ public class SettingsActivity extends ColorfulActivity {
                     return true;
                 }
             });
-        }
-
-        @Override
-        public void onProductPurchased(String productId, TransactionDetails details) {
-            if (productId.equals(getString(R.string.adproductid))) {
-                PrefHelper.setIfAdsRemoved(getActivity(), true);
-            }
-        }
-
-        @Override
-        public void onPurchaseHistoryRestored() {
-            if (bp.isPurchased(getString(R.string.adproductid))) {
-                PrefHelper.setIfAdsRemoved(getActivity(), true);
-            } else
-                PrefHelper.setIfAdsRemoved(getActivity(), false);
-        }
-
-        @Override
-        public void onBillingInitialized() {
-        }
-
-        @Override
-        public void onBillingError(int errorCode, Throwable error) {
-            PrefHelper.setIfAdsRemoved(getActivity(), false);
-        }
-
-        @Override
-        public void onDestroy() {
-            if (bp != null)
-                bp.release();
-
-            super.onDestroy();
         }
 
         @Override

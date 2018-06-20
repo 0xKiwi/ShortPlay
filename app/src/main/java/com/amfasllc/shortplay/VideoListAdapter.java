@@ -30,7 +30,7 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.View
         public ViewHolder(View v) {
             super(v);
             this.v = v;
-            videoThumb = (ImageView) v.findViewById(R.id.vidThumbnail);
+            videoThumb = v.findViewById(R.id.vidThumbnail);
         }
     }
 
@@ -52,11 +52,11 @@ public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.View
         int size = (density.widthPixels) / 6;
 
         Glide.with(mContext).load(hidden ? videoList.get(position).file : getUriOfCoverID(videoList.get(position).getCoverID()))
-                .asBitmap()
-                .centerCrop()
-                .override(size, size)
-                .diskCacheStrategy(DiskCacheStrategy.RESULT)
-                .into(holder.videoThumb);
+            .asBitmap()
+            .centerCrop()
+            .override(size, size)
+            .diskCacheStrategy(DiskCacheStrategy.RESULT)
+            .into(holder.videoThumb);
     }
 
     private static Uri getUriOfCoverID(long id){

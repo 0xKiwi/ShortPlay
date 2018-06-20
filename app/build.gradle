@@ -8,8 +8,8 @@ android {
         applicationId "com.amfasllc.shortplay"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 19
-        versionName "2.1.0"
+        versionCode 21
+        versionName "3.0.0"
     }
     buildTypes {
         release {
@@ -24,11 +24,10 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile fileTree(include: ['*.jar'],    dir: 'libs')
     compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support:design:26.1.0'
     compile 'com.github.bumptech.glide:glide:3.8.0'
-    compile 'com.google.firebase:firebase-ads:11.8.0'
     compile 'com.afollestad:digitus:0.3.0'
     compile 'com.anjlab.android.iab.v3:library:1.0.44'
     compile 'com.google.firebase:firebase-core:11.8.0'

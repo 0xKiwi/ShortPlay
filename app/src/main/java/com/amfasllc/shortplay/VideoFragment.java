@@ -1,16 +1,11 @@
 package com.amfasllc.shortplay;
 
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
@@ -20,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -44,7 +38,6 @@ public class VideoFragment extends Fragment {
 
     public int playthrough = 0;
     int position;
-    int adCount = 4;
 
     public CustomMediaController mMediaController;
     public VideoView videoView;
@@ -54,11 +47,10 @@ public class VideoFragment extends Fragment {
 
     private static final String ARG_PAGE = "ARG_PAGE";
 
-    public VideoFragment newInstance(int page, ArrayList<Video> videos, boolean showing, int adCount) {
+    public VideoFragment newInstance(int page, ArrayList<Video> videos, boolean showing) {
         this.playthrough = page;
         this.videos = videos;
         this.showing = showing;
-        this.adCount = adCount;
         Bundle args = new Bundle();
         args.putInt(ARG_PAGE, page);
         VideoFragment fragment = this;
@@ -79,9 +71,9 @@ public class VideoFragment extends Fragment {
 
         mMediaController = new CustomMediaController(getActivity());
 
-        videoView = (VideoView) view.findViewById(R.id.videoView);
+        videoView = view.findViewById(R.id.videoView);
 
-        RelativeLayout main = (RelativeLayout) view.findViewById(R.id.main);
+        RelativeLayout main = view.findViewById(R.id.main);
 
         if (playthrough >= videos.size())
             playthrough = videos.size() - 1;
@@ -118,30 +110,12 @@ public class VideoFragment extends Fragment {
         }
     }
 
-    public boolean checkForAd() {
-        if (!PrefHelper.getIfAdsRemoved(getActivity()))
-            if (isConnectingToInternet(getActivity()))
-                if (adCount % 17 == 0) {
-                    adCount = 0;
-                    FragmentManager fragmentManager = getFragmentManager();
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    AdFragment fragment = new AdFragment().newInstance(playthrough, videos, adCount + 1, showing);
-                    fragmentTransaction.replace(R.id.fragment_video, fragment, "ad_fragment");
-                    fragmentTransaction.commit();
-                    return true;
-                }
-        return false;
-    }
-
-
     public void changeVideo() {
         videoView.stopPlayback();
 
         ((VideoPagerActivity) getActivity()).videoList.scrollToPosition(playthrough);
         ((VideoPagerActivity) getActivity()).playThrough = playthrough;
         videoView.setVideoURI(videos.get(playthrough).getUri());
-
-        adCount++;
     }
 
     public void changeVideo(int page) {
@@ -150,38 +124,24 @@ public class VideoFragment extends Fragment {
     }
 
     public void changeForward() {
-        if (!checkForAd()) {
-            if (playthrough < videos.size() - 1) {
-                playthrough++;
-                changeVideo();
-            } else {
-                videoView.pause();
-                videoView.seekTo(0);
-                videoView.start();
-            }
-
-            if (((VideoPagerActivity) getActivity()).mIsLooping) {
-                ((VideoPagerActivity) getActivity()).mIsLooping = false;
-                getActivity().invalidateOptionsMenu();
-            }
+        if (playthrough < videos.size() - 1) {
+            playthrough++;
+            changeVideo();
+        } else {
+            videoView.pause();
+            videoView.seekTo(0);
+            videoView.start();
         }
     }
 
     public void changeBackward() {
-        if (!checkForAd()) {
-            if (playthrough == 0) {
-                videoView.pause();
-                videoView.seekTo(0);
-                videoView.start();
-            } else {
-                playthrough--;
-                changeVideo();
-            }
-
-            if (((VideoPagerActivity) getActivity()).mIsLooping) {
-                ((VideoPagerActivity) getActivity()).mIsLooping = false;
-                getActivity().invalidateOptionsMenu();
-            }
+        if (playthrough == 0) {
+            videoView.pause();
+            videoView.seekTo(0);
+            videoView.start();
+        } else {
+            playthrough--;
+            changeVideo();
         }
     }
 
@@ -400,12 +360,5 @@ public class VideoFragment extends Fragment {
 
             return super.dispatchKeyEvent(event);
         }
-    }
-
-    public static boolean isConnectingToInternet(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 }

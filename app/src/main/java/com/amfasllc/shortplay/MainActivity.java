@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,12 +29,8 @@ import com.afollestad.digitus.FingerprintDialog;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.amfasllc.shortplay.helpers.PrefHelper;
-import com.google.android.gms.ads.MobileAds;
 
 import org.polaric.colorful.ColorfulActivity;
-
-import static com.amfasllc.shortplay.helpers.Utils.getNavHeight;
-import static com.amfasllc.shortplay.helpers.Utils.hasNavBar;
 
 public class MainActivity extends ColorfulActivity implements FingerprintDialog.Callback, DigitusCallback {
 
@@ -57,19 +52,14 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
         setContentView(R.layout.app_bar_main);
         Digitus.init(this, getString(R.string.app_name), 69, this);
 
-        if (!PrefHelper.getIfAdsRemoved(this)) {
-            MobileAds.initialize(this, getResources().getString(R.string.googlekey));
-            MobileAds.setAppVolume(0.3f);
-        }
-
         callback = this;
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        folderList = (RecyclerView) findViewById(R.id.folderList);
+        folderList = findViewById(R.id.folderList);
 
-        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        swipeContainer = findViewById(R.id.swipeContainer);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -317,18 +307,6 @@ public class MainActivity extends ColorfulActivity implements FingerprintDialog.
             System.exit(0);
         }
     }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        /*if (resultCode != RESULT_OK)
-            return;
-        if (Build.VERSION.SDK_INT >= 19 && requestCode == 42) {
-            Uri treeUri = resultData.getData();
-            grantUriPermission(getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            PrefHelper.setSdCardPath(this, treeUri.toString());
-            getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }*/
-    }
-
 
     private void showSnack() {
         Snackbar mySnackbar = Snackbar.make(findViewById(R.id.main),
